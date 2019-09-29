@@ -1,6 +1,7 @@
 const AWSXRay = require("aws-xray-sdk-core");
 const AWS = AWSXRay.captureAWS(require("aws-sdk"));
 const dynamodb = new AWS.DynamoDB();
+const lambda = new AWS.Lambda();
 
 const config = {
   TS: {
@@ -64,31 +65,6 @@ const incrementItemCount = (id, catalogId) =>
     );
   });
 
-const getTrendingItems = catalogId =>
-  new Promise((resolve, reject) => {
-    dynamodb.query(
-      {
-        TableName: "ItemCounts",
-        IndexName: "catalogId-eventCount-index",
-        KeyConditionExpression: "catalogId = :cat",
-        ExpressionAttributeValues: {
-          ":cat": {
-            S: catalogId
-          }
-        },
-        ProjectionExpression: "id, eventCount",
-        Limit: 100,
-        ScanIndexForward: false
-      },
-      (err, data) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      }
-    );
-  });
-
 exports.handler = (event, context, cb) => {
   // TODO event validation
   const { queryStringParameters: { catalogId } = {}, body = "" } = event;
@@ -117,34 +93,27 @@ exports.handler = (event, context, cb) => {
           });
         })
         .then(() => {
-          return getTrendingItems(event.queryStringParameters.catalogId)
-            .then(data => {
-              try {
-                const responseBody = data.Items.reduce(
-                  (acc, item) => ({
-                    ...acc,
-                    [item.id.S]: item.eventCount.N
-                  }),
-                  {}
-                );
-
-                cb(null, {
-                  statusCode: 200,
-                  body: JSON.stringify(responseBody)
-                });
-              } catch (e) {
-                cb(null, {
+          return lambda.invoke(
+            {
+              FunctionName: "GetTrendingItems",
+              Payload: JSON.stringify({
+                queryStringParameters: {
+                  catalogId: "TS"
+                }
+              })
+            },
+            (err, data) => {
+              if (err) {
+                return cb(null, {
                   statusCode: 500,
-                  body: `Error formatting responseBody: ${e.message}`
+                  body: `Error invoking GetTrendingItems from RecordInteraction: ${err.message}`
                 });
               }
-            })
-            .catch(err => {
-              return cb(null, {
-                statusCode: 500,
-                body: `Error reading eventCounts from dynamodb: ${err.message}`
-              });
-            });
+              const upstreamResponse = data;
+              const response = JSON.parse(upstreamResponse.Payload);
+              cb(null, response);
+            }
+          );
         });
     });
 };
