@@ -98,7 +98,7 @@ exports.handler = (event, context, cb) => {
               FunctionName: "GetTrendingItems",
               Payload: JSON.stringify({
                 queryStringParameters: {
-                  catalogId: "TS"
+                  catalogId
                 }
               })
             },
