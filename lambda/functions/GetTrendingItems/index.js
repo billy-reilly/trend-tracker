@@ -28,7 +28,8 @@ const getTrendingItems = trendListId =>
         },
         ProjectionExpression: "itemId, interactionCount",
         Limit: config.trendListLimit,
-        ScanIndexForward: false
+        ScanIndexForward: false,
+        ConsistentRead: true
       },
       (err, data) => {
         if (err) {
