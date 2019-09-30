@@ -3,27 +3,31 @@ const AWS = AWSXRay.captureAWS(require("aws-sdk"));
 const dynamodb = new AWS.DynamoDB();
 const lambda = new AWS.Lambda();
 
-const config = {
-  TS: {
-    trendListLimit: 10,
+const configs = {
+  shoes: {
+    trendListLimit: "3",
+    aggregationWindow: 1000 * 60 // 1 min in ms
+  },
+  default: {
+    trendListLimit: "10",
     aggregationWindow: 1000 * 60 // 1 min in ms
   }
 };
 
-const recordIncrementEvent = (id, expiration_timestamp, catalogId) =>
+const recordIncrementEvent = (itemId, expirationTimestamp, trendListId) =>
   new Promise((resolve, reject) => {
     dynamodb.putItem(
       {
-        TableName: "IncrementEvents",
+        TableName: "Interactions",
         Item: {
-          id: {
-            S: id
+          itemId: {
+            S: itemId
           },
-          expiration_timestamp: {
-            N: expiration_timestamp.toString()
+          expirationTimestamp: {
+            N: expirationTimestamp.toString()
           },
-          catalogId: {
-            S: catalogId
+          trendListId: {
+            S: trendListId
           }
         }
       },
@@ -36,21 +40,21 @@ const recordIncrementEvent = (id, expiration_timestamp, catalogId) =>
     );
   });
 
-const incrementItemCount = (id, catalogId) =>
+const incrementItemCount = (itemId, trendListId) =>
   new Promise((resolve, reject) => {
     dynamodb.updateItem(
       {
-        TableName: "ItemCounts",
+        TableName: "InteractionCounts",
         Key: {
-          id: {
-            S: id
+          itemId: {
+            S: itemId
           },
-          catalogId: {
-            S: catalogId
+          trendListId: {
+            S: trendListId
           }
         },
         UpdateExpression:
-          "set eventCount = if_not_exists(eventCount, :zero) + :inc",
+          "set interactionCount = if_not_exists(interactionCount, :zero) + :inc",
         ExpressionAttributeValues: {
           ":inc": { N: "1" },
           ":zero": { N: "0" }
@@ -66,17 +70,28 @@ const incrementItemCount = (id, catalogId) =>
   });
 
 exports.handler = (event, context, cb) => {
-  // TODO event validation
-  const { queryStringParameters: { catalogId } = {}, body = "" } = event;
-  const id = JSON.parse(body).id; //
+  if (
+    !(event.queryStringParameters && event.queryStringParameters.trendListId)
+  ) {
+    // TODO: request body validation
+    return cb(null, {
+      statusCode: 400,
+      body: JSON.stringify({
+        message: "trendListId is a required query parameter"
+      })
+    });
+  }
 
-  const inc_timestamp = new Date().getTime();
+  const { queryStringParameters: { trendListId } = {}, body = "" } = event;
+  const itemId = JSON.parse(body).itemId;
+
+  const interactionTimestamp = new Date().getTime();
 
   // TODO: make safe
-  const expiration_timestamp =
-    inc_timestamp + config[catalogId].aggregationWindow;
+  const config = configs[trendListId] || configs.default;
+  const expirationTimestamp = interactionTimestamp + config.aggregationWindow;
 
-  recordIncrementEvent(id, expiration_timestamp, catalogId)
+  recordIncrementEvent(itemId, expirationTimestamp, trendListId)
     .catch(err => {
       // TODO: response handlers
       cb(null, {
@@ -85,7 +100,7 @@ exports.handler = (event, context, cb) => {
       });
     })
     .then(() => {
-      incrementItemCount(id, catalogId)
+      incrementItemCount(itemId, trendListId)
         .catch(err => {
           cb(null, {
             statusCode: 500,
@@ -98,7 +113,7 @@ exports.handler = (event, context, cb) => {
               FunctionName: "GetTrendingItems",
               Payload: JSON.stringify({
                 queryStringParameters: {
-                  catalogId
+                  trendListId
                 }
               })
             },

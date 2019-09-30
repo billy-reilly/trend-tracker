@@ -2,27 +2,32 @@ const AWSXRay = require("aws-xray-sdk-core");
 const AWS = AWSXRay.captureAWS(require("aws-sdk"));
 const dynamodb = new AWS.DynamoDB();
 
-const config = {
-  TS: {
+const configs = {
+  shoes: {
+    trendListLimit: "3",
+    aggregationWindow: 1000 * 60 // 1 min in ms
+  },
+  default: {
     trendListLimit: "10",
     aggregationWindow: 1000 * 60 // 1 min in ms
   }
 };
 
-const getTrendingItems = catalogId =>
+const getTrendingItems = trendListId =>
   new Promise((resolve, reject) => {
+    const config = configs[trendListId] || configs.default;
     dynamodb.query(
       {
-        TableName: "ItemCounts",
-        IndexName: "catalogId-eventCount-index",
-        KeyConditionExpression: "catalogId = :cat",
+        TableName: "InteractionCounts",
+        IndexName: "trendListId-interactionCount-index",
+        KeyConditionExpression: "trendListId = :tl",
         ExpressionAttributeValues: {
-          ":cat": {
-            S: catalogId
+          ":tl": {
+            S: trendListId
           }
         },
-        ProjectionExpression: "id, eventCount",
-        Limit: config[catalogId].trendListLimit,
+        ProjectionExpression: "itemId, interactionCount",
+        Limit: config.trendListLimit,
         ScanIndexForward: false
       },
       (err, data) => {
@@ -35,24 +40,26 @@ const getTrendingItems = catalogId =>
   });
 
 exports.handler = (event, context, cb) => {
-  if (!(event.queryStringParameters && event.queryStringParameters.catalogId)) {
-    // TODO: handle invalid catalogId e.g. XX
-
+  if (
+    !(event.queryStringParameters && event.queryStringParameters.trendListId)
+  ) {
     return cb(null, {
       statusCode: 400,
       body: JSON.stringify({
-        message: "catalogId is a required query parameter"
+        message: "trendListId is a required query parameter"
       })
     });
   }
 
-  return getTrendingItems(event.queryStringParameters.catalogId)
+  const { trendListId } = event.queryStringParameters;
+
+  return getTrendingItems(trendListId)
     .then(data => {
       try {
         const responseBody = data.Items.reduce(
           (acc, item) => ({
             ...acc,
-            [item.id.S]: item.eventCount.N
+            [item.itemId.S]: item.interactionCount.N
           }),
           {}
         );

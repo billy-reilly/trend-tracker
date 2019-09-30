@@ -2,22 +2,22 @@ const AWSXRay = require("aws-xray-sdk-core");
 const AWS = AWSXRay.captureAWS(require("aws-sdk"));
 const dynamodb = new AWS.DynamoDB();
 
-const decrementItemCount = ({ id, catalogId }) =>
+const decrementInteractionCount = ({ itemId, trendListId }) =>
   new Promise((resolve, reject) => {
     dynamodb.updateItem(
       {
-        TableName: "ItemCounts",
+        TableName: "InteractionCounts",
         Key: {
-          id: {
-            S: id
+          itemId: {
+            S: itemId
           },
-          catalogId: {
-            S: catalogId
+          trendListId: {
+            S: trendListId
           }
         },
         // TODO: handle 0 or minus counts?
         UpdateExpression:
-          "set eventCount = if_not_exists(eventCount, :one) - :dec",
+          "set interactionCount = if_not_exists(interactionCount, :one) - :dec",
         ExpressionAttributeValues: {
           ":dec": { N: "1" },
           ":one": { N: "1" }
@@ -32,17 +32,17 @@ const decrementItemCount = ({ id, catalogId }) =>
     );
   });
 
-const removeEventRecord = ({ id, expiration_timestamp }) =>
+const removeInteraction = ({ itemId, expirationTimestamp }) =>
   new Promise((resolve, reject) => {
     dynamodb.deleteItem(
       {
-        TableName: "IncrementEvents",
+        TableName: "Interactions",
         Key: {
-          id: {
-            S: id
+          itemId: {
+            S: itemId
           },
-          expiration_timestamp: {
-            N: expiration_timestamp
+          expirationTimestamp: {
+            N: expirationTimestamp
           }
         }
       },
@@ -57,11 +57,11 @@ const removeEventRecord = ({ id, expiration_timestamp }) =>
 
 exports.handler = (event, context, cb) => {
   const now = new Date().getTime();
-  // TODO: break out into getExpiredEvents function
+  // TODO: break out into getExpiredEvents
   return dynamodb.scan(
     {
-      TableName: "IncrementEvents",
-      FilterExpression: "expiration_timestamp < :now",
+      TableName: "Interactions",
+      FilterExpression: "expirationTimestamp < :now",
       ExpressionAttributeValues: {
         ":now": {
           N: now.toString()
@@ -82,9 +82,9 @@ exports.handler = (event, context, cb) => {
           return [
             ...acc,
             {
-              id: item.id.S,
-              catalogId: item.catalogId.S,
-              expiration_timestamp: item.expiration_timestamp.N
+              itemId: item.itemId.S,
+              trendListId: item.trendListId.S,
+              expirationTimestamp: item.expirationTimestamp.N
             }
           ];
         }, []);
@@ -101,14 +101,16 @@ exports.handler = (event, context, cb) => {
       return formattedEvents
         .reduce((previousPromise, eventData) => {
           return previousPromise
-            .then(() => decrementItemCount(eventData))
-            .then(() => removeEventRecord(eventData));
+            .then(() => decrementInteractionCount(eventData))
+            .then(() => removeInteraction(eventData));
           // TODO: clean up items with count 0?
         }, Promise.resolve())
         .then(() => {
           return cb(null, {
             statusCode: 200,
-            body: `HAS REMOVED EVENTS: ${hasEventsToClearUp ? "YES" : "NO"}`
+            body: `HAS REMOVED INTERACTIONS: ${
+              hasEventsToClearUp ? "YES" : "NO"
+            }`
           });
         })
         .catch(err => {
