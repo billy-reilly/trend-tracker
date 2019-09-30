@@ -60,7 +60,7 @@ exports.handler = (event, context, cb) => {
         const responseBody = data.Items.reduce(
           (acc, item) => ({
             ...acc,
-            [item.itemId.S]: item.interactionCount.N
+            [item.itemId.S]: parseInt(item.interactionCount.N, 10)
           }),
           {}
         );
