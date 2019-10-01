@@ -4,7 +4,7 @@
 
 This is a RESTful service for tracking lists of trending items.
 
-When a user performs an interaction that you want to track, you POST the id of the item that they've interacted with along with the id of the trending list you want to add it to:
+When a user performs an interaction, you can POST the id of the item that they've interacted with along with the id of the trending list you want to track it in:
 
 eg on an image sharing platform you might want to track the most 'liked' images
 
