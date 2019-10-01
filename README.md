@@ -45,3 +45,12 @@ It also supports multiple lists so you could track the most commented images as 
 ## Service design
 
 ![service diagram](./service-diagram.png)
+
+## TODOs:
+
+- [ ] Move configs into centralised place
+- [ ] Use dynamodb transactions to prevent two tables becoming out of sync
+- [ ] Commit infrastructure as code? - cloudformation / serverless framework
+- [ ] Unit & integration tests
+- [ ] Performance benchmarking & load testing
+- [ ] Demo FE application
