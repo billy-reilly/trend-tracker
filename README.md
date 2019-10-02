@@ -19,7 +19,7 @@ Content-Length: 24
 }
 ```
 
-Then when you're ready to consume that list you sent a GET request with the list id:
+Then when you want to consume that list you send a GET request with the list id:
 
 ```
 GET /?trendListId=likedImages
@@ -30,17 +30,17 @@ This returns a mapping of the top item IDs to interaction counts:
 
 ```
 {
-  "cat1": 12345,
-  "cat2": 1234,
-  "cat3": 123,
-  "cat4": 12,
+  "cat1": 102,
+  "cat2": 99,
+  "cat3": 95,
+  "cat4": 81,
   "boring_sunset": 1
 }
 ```
 
-You can specify the number of top items items that you'd like to return, and the period over which you'd like to aggregate the results (eg over the last hour or over the last week) - see `configs` in lambda functions
+You can specify the the size of this list (eg top 10 or top 100), and the period over which you'd like to aggregate the results (eg over the last hour) - see `configs` in lambda functions
 
-It also supports multiple lists so you could track the most commented images as well as the the most liked images
+It also supports multiple lists so on our imaginary image sharing platform we could track the images with the most comments as well as the the most likes
 
 ## Service design
 
@@ -48,9 +48,11 @@ It also supports multiple lists so you could track the most commented images as 
 
 ## TODOs:
 
+- [ ] Clean out items with a count of 0 from `InteractionCounts` table
 - [ ] Move configs into centralised place
 - [ ] Use dynamodb transactions to prevent two tables becoming out of sync
 - [ ] Commit infrastructure as code? - cloudformation / serverless framework
-- [ ] Unit & integration tests
-- [ ] Performance benchmarking & load testing
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Performance / load testing
 - [ ] Demo FE application
