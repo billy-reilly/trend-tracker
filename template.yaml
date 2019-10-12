@@ -1,0 +1,198 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: A RESTful API for tracking lists of trending items.
+Resources:
+  ########################
+  # DynamoDB tables:
+  ########################
+
+  InteractionCounts:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: InteractionCounts
+      AttributeDefinitions:
+        - AttributeName: trendListId
+          AttributeType: S
+        - AttributeName: itemId
+          AttributeType: S
+        - AttributeName: interactionCount
+          AttributeType: N
+      KeySchema:
+        - AttributeName: trendListId
+          KeyType: HASH
+        - AttributeName: itemId
+          KeyType: RANGE
+      LocalSecondaryIndexes:
+        - IndexName: trendListId-interactionCount-index
+          KeySchema:
+            - AttributeName: trendListId
+              KeyType: HASH
+            - AttributeName: interactionCount
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+      # Note, I'm using the on demand billing mode
+      # If you have a steady workload you should switch to PROVISIONED:
+      BillingMode: PAY_PER_REQUEST
+
+  Interactions:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Interactions
+      AttributeDefinitions:
+        - AttributeName: itemId
+          AttributeType: S
+        - AttributeName: expirationTimestamp
+          AttributeType: N
+        # - AttributeName: trendListId
+        #   AttributeType: S
+      KeySchema:
+        - AttributeName: itemId
+          KeyType: HASH
+        - AttributeName: expirationTimestamp
+          KeyType: RANGE
+      # Note, I'm using the on demand billing mode
+      # If you have a steady workload you should switch to PROVISIONED:
+      BillingMode: PAY_PER_REQUEST
+
+  ########################
+  # Lambda functions:
+  ########################
+
+  GetTrendingItems:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GetTrendingItems
+      Handler: index.handler
+      Runtime: nodejs10.x
+      CodeUri: ./GetTrendingItems/
+      Description: Handler for getting a list of trending items
+      Events:
+        GetTrendingItemsAPI:
+          Type: Api
+          Properties:
+            Path: /
+            Method: GET
+            RequestParameters:
+              method.request.querystring.trendListId:
+                Required: true
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:Query"
+              Resource:
+                "Fn::Join":
+                  - ""
+                  - - "arn:aws:dynamodb:"
+                    - Ref: "AWS::Region"
+                    - ":"
+                    - Ref: "AWS::AccountId"
+                    - ":table/InteractionCounts/index/trendListId-interactionCount-index"
+
+  RecordInteraction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: RecordInteraction
+      Handler: index.handler
+      Runtime: nodejs10.x
+      CodeUri: ./RecordInteraction/
+      Description: Handler for recording an user's interaction with an item
+      Events:
+        RecordInteractionAPI: # is this the name for APIGateway API? Reused?
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+            RequestParameters:
+              method.request.querystring.trendListId:
+                Required: true
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:PutItem"
+              Resource:
+                "Fn::Join":
+                  - ""
+                  - - "arn:aws:dynamodb:"
+                    - Ref: "AWS::Region"
+                    - ":"
+                    - Ref: "AWS::AccountId"
+                    - ":table/Interactions"
+            - Effect: Allow
+              Action:
+                - "dynamodb:UpdateItem"
+              Resource:
+                "Fn::Join":
+                  - ""
+                  - - "arn:aws:dynamodb:"
+                    - Ref: "AWS::Region"
+                    - ":"
+                    - Ref: "AWS::AccountId"
+                    - ":table/InteractionCounts"
+            - Effect: Allow
+              Action:
+                - "lambda:InvokeFunction"
+              Resource:
+                "Fn::Join":
+                  - ""
+                  - - "arn:aws:lambda:"
+                    - Ref: "AWS::Region"
+                    - ":"
+                    - Ref: "AWS::AccountId"
+                    - ":function:GetTrendingItems"
+
+  WipeExpiredInteractions:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: WipeExpiredInteractions
+      Handler: index.handler
+      Runtime: nodejs10.x
+      CodeUri: ./WipeExpiredInteractions/
+      Description: Function that is run at regular intervals to remove expired records
+      Events:
+        ScheduledRule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minute)
+            Enabled: True
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:Scan"
+                - "dynamodb:DeleteItem"
+              Resource:
+                "Fn::Join":
+                  - ""
+                  - - "arn:aws:dynamodb:"
+                    - Ref: "AWS::Region"
+                    - ":"
+                    - Ref: "AWS::AccountId"
+                    - ":table/Interactions"
+            - Effect: Allow
+              Action:
+                - "dynamodb:UpdateItem"
+              Resource:
+                "Fn::Join":
+                  - ""
+                  - - "arn:aws:dynamodb:"
+                    - Ref: "AWS::Region"
+                    - ":"
+                    - Ref: "AWS::AccountId"
+                    - ":table/InteractionCounts"
+            - Effect: Allow
+              Action:
+                - "lambda:InvokeFunction"
+              Resource:
+                "Fn::Join":
+                  - ""
+                  - - "arn:aws:lambda:"
+                    - Ref: "AWS::Region"
+                    - ":"
+                    - Ref: "AWS::AccountId"
+                    - ":function:GetTrendingItems"
