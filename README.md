@@ -51,7 +51,7 @@ It also supports multiple lists so on our imaginary image sharing platform we co
 - [ ] Clean out items with a count of 0 from `InteractionCounts` table
 - [ ] Move configs into centralised place
 - [ ] Use dynamodb transactions to prevent two tables becoming out of sync
-- [ ] Commit infrastructure as code? - cloudformation / serverless framework
+- [x] Commit infrastructure as code? - cloudformation / serverless framework
 - [ ] Unit tests
 - [ ] Integration tests
 - [ ] Performance / load testing
