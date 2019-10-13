@@ -44,8 +44,6 @@ Resources:
           AttributeType: S
         - AttributeName: expirationTimestamp
           AttributeType: N
-        # - AttributeName: trendListId
-        #   AttributeType: S
       KeySchema:
         - AttributeName: itemId
           KeyType: HASH
@@ -100,7 +98,7 @@ Resources:
       CodeUri: ./RecordInteraction/
       Description: Handler for recording an user's interaction with an item
       Events:
-        RecordInteractionAPI: # is this the name for APIGateway API? Reused?
+        RecordInteractionAPI:
           Type: Api
           Properties:
             Path: /
@@ -152,7 +150,8 @@ Resources:
       Handler: index.handler
       Runtime: nodejs10.x
       CodeUri: ./WipeExpiredInteractions/
-      Description: Function that is run at regular intervals to remove expired records
+      Description: >-
+        Function that is run at regular intervals to remove expired records
       Events:
         ScheduledRule:
           Type: Schedule
@@ -185,14 +184,3 @@ Resources:
                     - ":"
                     - Ref: "AWS::AccountId"
                     - ":table/InteractionCounts"
-            - Effect: Allow
-              Action:
-                - "lambda:InvokeFunction"
-              Resource:
-                "Fn::Join":
-                  - ""
-                  - - "arn:aws:lambda:"
-                    - Ref: "AWS::Region"
-                    - ":"
-                    - Ref: "AWS::AccountId"
-                    - ":function:GetTrendingItems"
