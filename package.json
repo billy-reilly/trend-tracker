@@ -1,0 +1,22 @@
+{
+  "name": "trend-tracker",
+  "version": "1.0.0",
+  "description": "## What is it?",
+  "main": "index.js",
+  "scripts": {
+    "test:unit": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/billy-reilly/trend-tracker.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/billy-reilly/trend-tracker/issues"
+  },
+  "homepage": "https://github.com/billy-reilly/trend-tracker#readme",
+  "devDependencies": {
+    "jest": "^24.9.0"
+  }
+}
