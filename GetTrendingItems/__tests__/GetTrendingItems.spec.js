@@ -3,9 +3,3 @@ describe("my first test", () => {
     expect(true).toBe(true);
   });
 });
-
-describe("my second test", () => {
-  it("shold also pass", () => {
-    expect(false).toBe(false);
-  });
-});
