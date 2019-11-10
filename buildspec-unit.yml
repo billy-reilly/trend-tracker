@@ -7,9 +7,7 @@ phases:
     commands:
       - echo Installing dependencies...
       - npm install
+      - ./scripts/install_handler_deps.sh
   build:
     commands:
       - npm run test:unit
-  post_build:
-    commands:
-      - echo Unit tests passed!
