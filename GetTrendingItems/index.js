@@ -41,17 +41,6 @@ const getTrendingItems = trendListId =>
   });
 
 exports.handler = (event, context, cb) => {
-  if (
-    !(event.queryStringParameters && event.queryStringParameters.trendListId)
-  ) {
-    return cb(null, {
-      statusCode: 400,
-      body: JSON.stringify({
-        message: "trendListId is a required query parameter"
-      })
-    });
-  }
-
   const { trendListId } = event.queryStringParameters;
 
   return getTrendingItems(trendListId)

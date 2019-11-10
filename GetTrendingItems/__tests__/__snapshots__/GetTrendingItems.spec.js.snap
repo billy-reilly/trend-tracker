@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GetTrendingItems should query DynamoDB 1`] = `
+Object {
+  "ConsistentRead": true,
+  "ExpressionAttributeValues": Object {
+    ":tl": Object {
+      "S": "shoes",
+    },
+  },
+  "IndexName": "trendListId-interactionCount-index",
+  "KeyConditionExpression": "trendListId = :tl",
+  "Limit": "3",
+  "ProjectionExpression": "itemId, interactionCount",
+  "ScanIndexForward": false,
+  "TableName": "InteractionCounts",
+}
+`;
