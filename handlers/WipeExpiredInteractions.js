@@ -1,5 +1,7 @@
-const AWSXRay = require("aws-xray-sdk-core");
-const AWS = AWSXRay.captureAWS(require("aws-sdk"));
+import AWSXRay from "aws-xray-sdk-core";
+import AWSSDK from "aws-sdk";
+
+const AWS = AWSXRay.captureAWS(AWSSDK);
 const dynamodb = new AWS.DynamoDB();
 
 const decrementInteractionCount = ({ itemId, trendListId }) =>
@@ -55,7 +57,7 @@ const removeInteraction = ({ itemId, expirationTimestamp }) =>
     );
   });
 
-exports.handler = (event, context, cb) => {
+export const handler = (event, context, cb) => {
   const now = new Date().getTime();
   // TODO: break out into getExpiredEvents
   return dynamodb.scan(

@@ -1,5 +1,7 @@
-const AWSXRay = require("aws-xray-sdk-core");
-const AWS = AWSXRay.captureAWS(require("aws-sdk"));
+import AWSXRay from "aws-xray-sdk-core";
+import AWSSDK from "aws-sdk";
+
+const AWS = AWSXRay.captureAWS(AWSSDK);
 const dynamodb = new AWS.DynamoDB();
 const lambda = new AWS.Lambda();
 
@@ -69,19 +71,7 @@ const incrementItemCount = (itemId, trendListId) =>
     );
   });
 
-exports.handler = (event, context, cb) => {
-  if (
-    !(event.queryStringParameters && event.queryStringParameters.trendListId)
-  ) {
-    // TODO: request body validation
-    return cb(null, {
-      statusCode: 400,
-      body: JSON.stringify({
-        message: "trendListId is a required query parameter"
-      })
-    });
-  }
-
+export const handler = (event, context, cb) => {
   const { queryStringParameters: { trendListId } = {}, body = "" } = event;
   const itemId = JSON.parse(body).itemId;
 

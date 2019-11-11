@@ -1,10 +1,11 @@
-const mockQuery = jest.fn();
+export const mockQuery = jest.fn();
 
 const DynamoDB = jest.fn().mockImplementation(() => ({
   query: mockQuery
 }));
 
-module.exports = {
-  DynamoDB,
-  mockQuery
+const fakeAWSSDKInterface = {
+  DynamoDB
 };
+
+export default fakeAWSSDKInterface;
