@@ -48,7 +48,7 @@ describe("RecordInteraction", () => {
     putParams = undefined;
     updateParams = undefined;
 
-    // mocks return expected result by default:
+    // mocks return expected values by default:
     mockPutItem.mockImplementation((params, cb) => {
       putParams = params;
       return cb(null, {});
