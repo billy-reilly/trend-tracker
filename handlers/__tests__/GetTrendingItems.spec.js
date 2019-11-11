@@ -1,5 +1,5 @@
-const getTrendingItemsHandler = require("../GetTrendingItems").handler;
-const mockQuery = require("../../__mocks__/aws-sdk").mockQuery;
+import { handler as getTrendingItemsHandler } from "../GetTrendingItems";
+import { mockQuery } from "../../__mocks__/aws-sdk";
 
 jest.mock("aws-xray-sdk-core", () => ({
   captureAWS: a => a
