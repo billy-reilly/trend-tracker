@@ -1,9 +1,12 @@
 {
   "name": "trend-tracker",
   "version": "1.0.0",
-  "description": "## What is it?",
+  "description": "service for tracking lists of trending items",
   "main": "index.js",
   "scripts": {
+    "build": "webpack --env.handler=GetTrendingItems && webpack --env.handler=RecordInteraction && webpack --env.handler=WipeExpiredInteractions",
+    "sam:deploy": "sam deploy --template-file packaged.yaml --stack-name trend-tracker-stack --capabilities CAPABILITY_IAM",
+    "sam:package": "sam package --template-file template.yaml --s3-bucket trend-tracker --output-template-file packaged.yaml",
     "test:unit": "jest"
   },
   "repository": {
@@ -17,6 +20,11 @@
   },
   "homepage": "https://github.com/billy-reilly/trend-tracker#readme",
   "devDependencies": {
-    "jest": "^24.9.0"
+    "jest": "^24.9.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "aws-xray-sdk-core": "^2.4.0"
   }
 }
