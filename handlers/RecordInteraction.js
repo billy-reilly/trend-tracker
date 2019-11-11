@@ -1,20 +1,11 @@
 import AWSXRay from "aws-xray-sdk-core";
 import AWSSDK from "aws-sdk";
 
+import configs from "../trend-list-configs";
+
 const AWS = AWSXRay.captureAWS(AWSSDK);
 const dynamodb = new AWS.DynamoDB();
 const lambda = new AWS.Lambda();
-
-const configs = {
-  shoes: {
-    trendListLimit: "3",
-    aggregationWindow: 1000 * 60 // 1 min in ms
-  },
-  default: {
-    trendListLimit: "10",
-    aggregationWindow: 1000 * 60 // 1 min in ms
-  }
-};
 
 const recordIncrementEvent = (itemId, expirationTimestamp, trendListId) =>
   new Promise((resolve, reject) => {
@@ -77,26 +68,12 @@ export const handler = (event, context, cb) => {
 
   const interactionTimestamp = new Date().getTime();
 
-  // TODO: make safe
   const config = configs[trendListId] || configs.default;
   const expirationTimestamp = interactionTimestamp + config.aggregationWindow;
 
-  recordIncrementEvent(itemId, expirationTimestamp, trendListId)
-    .catch(err => {
-      // TODO: response handlers
-      cb(null, {
-        statusCode: 500,
-        body: `Error writing increment record: ${err.message}`
-      });
-    })
+  return recordIncrementEvent(itemId, expirationTimestamp, trendListId)
     .then(() => {
-      incrementItemCount(itemId, trendListId)
-        .catch(err => {
-          cb(null, {
-            statusCode: 500,
-            body: `Error updating count: ${err.message}`
-          });
-        })
+      return incrementItemCount(itemId, trendListId)
         .then(() => {
           return lambda.invoke(
             {
@@ -114,11 +91,30 @@ export const handler = (event, context, cb) => {
                   body: `Error invoking GetTrendingItems from RecordInteraction: ${err.message}`
                 });
               }
-              const upstreamResponse = data;
-              const response = JSON.parse(upstreamResponse.Payload);
-              cb(null, response);
+
+              try {
+                const response = JSON.parse(data.Payload);
+                cb(null, response);
+              } catch (err) {
+                cb(null, {
+                  statusCode: 500,
+                  body: `Error parsing response from GetTrendingItems: ${err}`
+                });
+              }
             }
           );
+        })
+        .catch(err => {
+          cb(null, {
+            statusCode: 500,
+            body: `Error updating count: ${err.message}`
+          });
         });
+    })
+    .catch(err => {
+      cb(null, {
+        statusCode: 500,
+        body: `Error writing increment record: ${err.message}`
+      });
     });
 };

@@ -1,19 +1,10 @@
 import AWSXRay from "aws-xray-sdk-core";
 import AWSSDK from "aws-sdk";
 
+import configs from "../trend-list-configs";
+
 const AWS = AWSXRay.captureAWS(AWSSDK);
 const dynamodb = new AWS.DynamoDB();
-
-const configs = {
-  shoes: {
-    trendListLimit: "3",
-    aggregationWindow: 1000 * 60 // 1 min in ms
-  },
-  default: {
-    trendListLimit: "10",
-    aggregationWindow: 1000 * 60 // 1 min in ms
-  }
-};
 
 const getTrendingItems = trendListId =>
   new Promise((resolve, reject) => {

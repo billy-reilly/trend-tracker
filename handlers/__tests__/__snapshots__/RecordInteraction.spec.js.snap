@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RecordInteraction increment item count should make an updateItem request to dynamoDB 1`] = `
+Object {
+  "ExpressionAttributeValues": Object {
+    ":inc": Object {
+      "N": "1",
+    },
+    ":zero": Object {
+      "N": "0",
+    },
+  },
+  "Key": Object {
+    "itemId": Object {
+      "S": "old boot",
+    },
+    "trendListId": Object {
+      "S": "shoes",
+    },
+  },
+  "TableName": "InteractionCounts",
+  "UpdateExpression": "set interactionCount = if_not_exists(interactionCount, :zero) + :inc",
+}
+`;
+
+exports[`RecordInteraction record increment event should make a putItem request to dynamoDB 1`] = `
+Object {
+  "Item": Object {
+    "expirationTimestamp": Object {
+      "N": "1573495260000",
+    },
+    "itemId": Object {
+      "S": "old boot",
+    },
+    "trendListId": Object {
+      "S": "shoes",
+    },
+  },
+  "TableName": "Interactions",
+}
+`;
