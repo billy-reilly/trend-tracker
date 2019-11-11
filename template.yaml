@@ -61,9 +61,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: GetTrendingItems
-      Handler: index.handler
+      Handler: GetTrendingItems-bundle.handler
       Runtime: nodejs10.x
-      CodeUri: ./GetTrendingItems/
+      CodeUri: ./dist/GetTrendingItems-bundle.js
       Description: Handler for getting a list of trending items
       Events:
         GetTrendingItemsAPI:
@@ -93,9 +93,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: RecordInteraction
-      Handler: index.handler
+      Handler: RecordInteraction-bundle.handler
       Runtime: nodejs10.x
-      CodeUri: ./RecordInteraction/
+      CodeUri: ./dist/RecordInteraction-bundle.js
       Description: Handler for recording an user's interaction with an item
       Events:
         RecordInteractionAPI:
@@ -147,9 +147,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: WipeExpiredInteractions
-      Handler: index.handler
+      Handler: WipeExpiredInteractions-bundle.handler
       Runtime: nodejs10.x
-      CodeUri: ./WipeExpiredInteractions/
+      CodeUri: ./dist/WipeExpiredInteractions-bundle.js
       Description: >-
         Function that is run at regular intervals to remove expired records
       Events:

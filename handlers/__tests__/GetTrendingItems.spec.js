@@ -1,4 +1,4 @@
-const getTrendingItemsHandler = require("../index").handler;
+const getTrendingItemsHandler = require("../GetTrendingItems").handler;
 const mockQuery = require("../../__mocks__/aws-sdk").mockQuery;
 
 jest.mock("aws-xray-sdk-core", () => ({
