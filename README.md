@@ -50,12 +50,15 @@ It also supports multiple lists so on our imaginary image sharing platform we co
 
 - [ ] Clean out items with a count of 0 from `InteractionCounts` table
 - [ ] Use dynamodb transactions to prevent two tables becoming out of sync
+- [x] CodeBuild job for PRs
+- [ ] CodePipeline post-merge test & deployment
 - [x] Bundle handlers using webpack
+- [ ] Tree shaking
 - [x] Move configs into centralised place
 - [ ] Create reusable response helpers
 - [ ] Enforce code style - (eslint + prettier)
 - [x] Commit infrastructure as code? - cloudformation / serverless framework
-- [ ] Unit tests
+- [x] Unit tests
 - [ ] Integration tests
 - [ ] Performance / load testing
 - [ ] Demo FE application
