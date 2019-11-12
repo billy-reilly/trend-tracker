@@ -91,10 +91,11 @@ export const handler = (event, context, cb) => {
           ];
         }, []);
       } catch (err) {
-        return cb(null, {
+        cb(null, {
           statusCode: 500,
           body: `Error formatting data ${err.message}`
         });
+        return Promise.resolve();
       }
 
       const hasEventsToClearUp = formattedEvents && formattedEvents.length;
