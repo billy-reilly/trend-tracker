@@ -46,6 +46,29 @@ It also supports multiple lists so on our imaginary image sharing platform we co
 
 ![service diagram](./service-diagram.png)
 
+## How to deploy to your own AWS account
+* Note this project is still a work in progress - use at your own risk
+
+1. Clone this repository
+
+2. Modify the configuration in `./trend-list-configs.js` to fit your use case. You can define rules on a per-list basis as well as having defaults.
+
+3. Build your configured lambda code:
+
+   3.1. install npm dependencies: `npm i`
+
+   3.2. bundle the code: `npm run build`
+
+4. [Create an S3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html) with the name `trend-tracker`
+
+5. Ensure you have the AWS SAM CLI installed and configured (you can follow [this installation guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) - but skip the steps for creating an S3 bucket and installing docker)
+
+6. Package and upload your deployment artifacts: `npm run sam:package`
+
+7. Deploy the service: `npm run sam:deploy`
+
+8. (Optional) Test the API and then monitor the service maps [in X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html)
+
 ## TODOs:
 
 - [ ] Clean out items with a count of 0 from `InteractionCounts` table
@@ -53,8 +76,9 @@ It also supports multiple lists so on our imaginary image sharing platform we co
 - [x] CodeBuild job for PRs
 - [ ] CodePipeline post-merge test & deployment
 - [x] Bundle handlers using webpack
-- [ ] Tree shaking
-- [x] Move configs into centralised place
+- [ ] Tree shaking?
+- [ ] Move configs into DynamoDB table (with DAX?) and design API / front end for updating
+- [ ] Make deployment more configurable - allow stack name / bucket name specification
 - [ ] Create reusable response helpers
 - [ ] Enforce code style - (eslint + prettier)
 - [x] Commit infrastructure as code? - cloudformation / serverless framework
