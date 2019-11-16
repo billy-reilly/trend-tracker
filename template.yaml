@@ -74,6 +74,7 @@ Resources:
             RequestParameters:
               method.request.querystring.trendListId:
                 Required: true
+      Tracing: Active
       Policies:
         - Version: "2012-10-17"
           Statement:
@@ -106,6 +107,7 @@ Resources:
             RequestParameters:
               method.request.querystring.trendListId:
                 Required: true
+      Tracing: Active
       Policies:
         - Version: "2012-10-17"
           Statement:
@@ -158,6 +160,7 @@ Resources:
           Properties:
             Schedule: rate(1 minute)
             Enabled: True
+      Tracing: Active
       Policies:
         - Version: "2012-10-17"
           Statement:
