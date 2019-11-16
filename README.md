@@ -47,7 +47,7 @@ It also supports multiple lists so on our imaginary image sharing platform we co
 ![service diagram](./service-diagram.png)
 
 ## How to deploy to your own AWS account
-* Note this project is still a work in progress - use at your own risk
+** Note this project is still a work in progress - use at your own risk
 
 1. Clone this repository
 
