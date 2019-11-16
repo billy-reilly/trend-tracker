@@ -67,7 +67,7 @@ It also supports multiple lists so on our imaginary image sharing platform we co
 
 7. Deploy the service: `npm run sam:deploy`
 
-8. (Optional) Test the API and then monitor the service maps [in X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html)
+8. (Optional) [Test the API](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-call-api.html#apigateway-how-to-call-rest-api) and then monitor the service maps [in X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html)
 
 ## TODOs:
 
