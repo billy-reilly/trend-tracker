@@ -38,7 +38,7 @@ This returns a mapping of the top item IDs to interaction counts:
 }
 ```
 
-You can specify the the size of this list (eg top 10 or top 100), and the period over which you'd like to aggregate the results (eg over the last hour) - see `configs` in lambda functions
+You can specify the the size of this list (eg top 10 or top 100), and the period over which you'd like to aggregate the results (eg over the last hour) - see `trend-list-configs.js` in the project root
 
 It also supports multiple lists so on our imaginary image sharing platform we could keep another list of the images with the most comments, for example
 
