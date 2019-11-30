@@ -1,7 +1,8 @@
 import AWSXRay from "aws-xray-sdk-core";
 import AWSSDK from "aws-sdk";
 
-import configs from "../trend-list-configs";
+import configs from "../../trend-list-configs";
+import { createPromiseCB } from "../helpers/promiseHelpers";
 
 const AWS = AWSXRay.captureAWS(AWSSDK);
 const dynamodb = new AWS.DynamoDB();
@@ -24,12 +25,7 @@ const recordIncrementEvent = (itemId, expirationTimestamp, trendListId) =>
           }
         }
       },
-      (err, data) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      }
+      createPromiseCB(resolve, reject)
     );
   });
 
@@ -53,12 +49,7 @@ const incrementItemCount = (itemId, trendListId) =>
           ":zero": { N: "0" }
         }
       },
-      (err, data) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      }
+      createPromiseCB(resolve, reject)
     );
   });
 
@@ -73,12 +64,7 @@ const invokeGetTrendingItems = trendListId =>
           }
         })
       },
-      (err, data) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      }
+      createPromiseCB(resolve, reject)
     );
   });
 

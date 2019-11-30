@@ -5,7 +5,7 @@ import {
   mockScan,
   mockUpdateItem,
   mockDeleteItem
-} from "../../__mocks__/aws-sdk";
+} from "../../../__mocks__/aws-sdk";
 
 jest.mock("aws-xray-sdk-core", () => ({
   captureAWS: a => a
