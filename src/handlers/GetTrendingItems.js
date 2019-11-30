@@ -2,6 +2,7 @@ import AWSXRay from "aws-xray-sdk-core";
 import AWSSDK from "aws-sdk";
 
 import configs from "../../trend-list-configs";
+import { createPromiseCB } from "../helpers/promiseHelpers";
 
 const AWS = AWSXRay.captureAWS(AWSSDK);
 const dynamodb = new AWS.DynamoDB();
@@ -24,12 +25,7 @@ const getTrendingItems = trendListId =>
         ScanIndexForward: false,
         ConsistentRead: true
       },
-      (err, data) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      }
+      createPromiseCB(resolve, reject)
     );
   });
 

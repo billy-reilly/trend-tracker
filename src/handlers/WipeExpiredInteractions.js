@@ -1,6 +1,8 @@
 import AWSXRay from "aws-xray-sdk-core";
 import AWSSDK from "aws-sdk";
 
+import { createPromiseCB } from "../helpers/promiseHelpers";
+
 const AWS = AWSXRay.captureAWS(AWSSDK);
 const dynamodb = new AWS.DynamoDB();
 
@@ -25,12 +27,7 @@ const decrementInteractionCount = ({ itemId, trendListId }) =>
           ":one": { N: "1" }
         }
       },
-      (err, data) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      }
+      createPromiseCB(resolve, reject)
     );
   });
 
@@ -48,12 +45,7 @@ const removeInteraction = ({ itemId, expirationTimestamp }) =>
           }
         }
       },
-      (err, data) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve(data);
-      }
+      createPromiseCB(resolve, reject)
     );
   });
 
