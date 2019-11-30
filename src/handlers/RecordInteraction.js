@@ -1,7 +1,7 @@
 import AWSXRay from "aws-xray-sdk-core";
 import AWSSDK from "aws-sdk";
 
-import configs from "../trend-list-configs";
+import configs from "../../trend-list-configs";
 
 const AWS = AWSXRay.captureAWS(AWSSDK);
 const dynamodb = new AWS.DynamoDB();
