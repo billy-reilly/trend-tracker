@@ -62,6 +62,26 @@ const incrementItemCount = (itemId, trendListId) =>
     );
   });
 
+const invokeGetTrendingItems = trendListId =>
+  new Promise((resolve, reject) => {
+    lambda.invoke(
+      {
+        FunctionName: "GetTrendingItems",
+        Payload: JSON.stringify({
+          queryStringParameters: {
+            trendListId
+          }
+        })
+      },
+      (err, data) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(data);
+      }
+    );
+  });
+
 export const handler = (event, context, cb) => {
   const { queryStringParameters: { trendListId } = {}, body = "" } = event;
   const itemId = JSON.parse(body).itemId;
@@ -75,25 +95,10 @@ export const handler = (event, context, cb) => {
     .then(() => {
       return incrementItemCount(itemId, trendListId)
         .then(() => {
-          return lambda.invoke(
-            {
-              FunctionName: "GetTrendingItems",
-              Payload: JSON.stringify({
-                queryStringParameters: {
-                  trendListId
-                }
-              })
-            },
-            (err, data) => {
-              if (err) {
-                return cb(null, {
-                  statusCode: 500,
-                  body: `Error invoking GetTrendingItems from RecordInteraction: ${err.message}`
-                });
-              }
-
+          return invokeGetTrendingItems(trendListId)
+            .then(upstreamResponse => {
               try {
-                const response = JSON.parse(data.Payload);
+                const response = JSON.parse(upstreamResponse.Payload);
                 cb(null, response);
               } catch (err) {
                 cb(null, {
@@ -101,8 +106,13 @@ export const handler = (event, context, cb) => {
                   body: `Error parsing response from GetTrendingItems: ${err}`
                 });
               }
-            }
-          );
+            })
+            .catch(err => {
+              cb(null, {
+                statusCode: 500,
+                body: `Error invoking GetTrendingItems from RecordInteraction: ${err.message}`
+              });
+            });
         })
         .catch(err => {
           cb(null, {
