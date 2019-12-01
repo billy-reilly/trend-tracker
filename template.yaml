@@ -6,6 +6,20 @@ Resources:
   # DynamoDB tables:
   ########################
 
+  TrendListConfigs:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: TrendListConfigs
+      AttributeDefinitions:
+        - AttributeName: trendListId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: trendListId
+          KeyType: HASH
+      # Note, I'm using the on demand billing mode
+      # If you have a steady workload you should switch to PROVISIONED:
+      BillingMode: PAY_PER_REQUEST
+
   InteractionCounts:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -56,6 +70,30 @@ Resources:
   ########################
   # Lambda functions:
   ########################
+
+  TrendListConfigsSeeder:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: TrendListConfigsSeeder
+      Handler: TrendListConfigsSeeder-bundle.handler
+      Runtime: nodejs10.x
+      CodeUri: ./dist/TrendListConfigsSeeder-bundle.js
+      Description: Custom resource for seeding the config table when the stack is created
+      Timeout: 60
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:PutItem"
+              Resource:
+                "Fn::Join":
+                  - ""
+                  - - "arn:aws:dynamodb:"
+                    - Ref: "AWS::Region"
+                    - ":"
+                    - Ref: "AWS::AccountId"
+                    - ":table/TrendListConfigs"
 
   GetTrendingItems:
     Type: AWS::Serverless::Function
@@ -187,3 +225,15 @@ Resources:
                     - ":"
                     - Ref: "AWS::AccountId"
                     - ":table/InteractionCounts"
+
+  ########################
+  # Custom resources:
+  ########################
+
+  TrendListConfigsSeederTrigger:
+    Type: Custom::TrendListConfigsSeeder
+    Properties:
+      ServiceToken: !GetAtt TrendListConfigsSeeder.Arn
+    DependsOn:
+      - TrendListConfigs
+      - TrendListConfigsSeeder
