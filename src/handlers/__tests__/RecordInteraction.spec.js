@@ -6,6 +6,7 @@ import {
   mockUpdateItem,
   mockInvoke
 } from "../../../__mocks__/aws-sdk";
+// TODO create fake config for test:
 import configs from "../../../trend-list-configs";
 
 jest.mock("aws-xray-sdk-core", () => ({

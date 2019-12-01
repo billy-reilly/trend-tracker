@@ -1,7 +1,7 @@
 import AWSXRay from "aws-xray-sdk-core";
 import AWSSDK from "aws-sdk";
 
-import configs from "../../trend-list-configs";
+import { getTrendListConfig } from "../helpers/trendListConfigHelpers";
 import { createPromiseCB } from "../helpers/promiseHelpers";
 
 const AWS = AWSXRay.captureAWS(AWSSDK);
@@ -74,43 +74,53 @@ export const handler = (event, context, cb) => {
 
   const interactionTimestamp = new Date().getTime();
 
-  const config = configs[trendListId] || configs.default;
-  const expirationTimestamp = interactionTimestamp + config.aggregationWindow;
-
-  return recordIncrementEvent(itemId, expirationTimestamp, trendListId)
-    .then(() => {
-      return incrementItemCount(itemId, trendListId)
-        .then(() => {
-          return invokeGetTrendingItems(trendListId)
-            .then(upstreamResponse => {
-              try {
-                const response = JSON.parse(upstreamResponse.Payload);
-                cb(null, response);
-              } catch (err) {
+  return (
+    getTrendListConfig(trendListId)
+      .then(({ aggregationWindow }) => {
+        const expirationTimestamp = interactionTimestamp + aggregationWindow;
+        return recordIncrementEvent(itemId, expirationTimestamp, trendListId)
+          .then(() => {
+            return incrementItemCount(itemId, trendListId)
+              .then(() => {
+                return invokeGetTrendingItems(trendListId)
+                  .then(upstreamResponse => {
+                    try {
+                      const response = JSON.parse(upstreamResponse.Payload);
+                      cb(null, response);
+                    } catch (err) {
+                      cb(null, {
+                        statusCode: 500,
+                        body: `Error parsing response from GetTrendingItems: ${err}`
+                      });
+                    }
+                  })
+                  .catch(err => {
+                    cb(null, {
+                      statusCode: 500,
+                      body: `Error invoking GetTrendingItems from RecordInteraction: ${err.message}`
+                    });
+                  });
+              })
+              .catch(err => {
                 cb(null, {
                   statusCode: 500,
-                  body: `Error parsing response from GetTrendingItems: ${err}`
+                  body: `Error updating count: ${err.message}`
                 });
-              }
-            })
-            .catch(err => {
-              cb(null, {
-                statusCode: 500,
-                body: `Error invoking GetTrendingItems from RecordInteraction: ${err.message}`
               });
+          })
+          .catch(err => {
+            cb(null, {
+              statusCode: 500,
+              body: `Error writing increment record: ${err.message}`
             });
-        })
-        .catch(err => {
-          cb(null, {
-            statusCode: 500,
-            body: `Error updating count: ${err.message}`
           });
+      })
+      // config error
+      .catch(err => {
+        return cb(null, {
+          statusCode: 500,
+          body: err.message
         });
-    })
-    .catch(err => {
-      cb(null, {
-        statusCode: 500,
-        body: `Error writing increment record: ${err.message}`
-      });
-    });
+      })
+  );
 };
