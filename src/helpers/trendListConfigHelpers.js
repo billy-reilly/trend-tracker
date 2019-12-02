@@ -20,8 +20,6 @@ export const getTrendListConfigById = id =>
       createPromiseCB(resolve, reject)
     );
   }).then(data => {
-    console.log("config data:::::", data);
-
     if (!data.Item) {
       throw new Error(`TrendListConfig not found for ${id}`);
     }
@@ -42,8 +40,6 @@ export const getTrendListConfigById = id =>
 
 export const getTrendListConfig = id =>
   getTrendListConfigById(id).catch(err => {
-    console.log("caught error:::", err.message);
-
     if (/^TrendListConfig not found for default$/.test(err.message)) {
       throw new Error("Default TrendListConfig item is missing");
     }
