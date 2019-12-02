@@ -6,13 +6,13 @@ import {
   mockUpdateItem,
   mockInvoke
 } from "../../../__mocks__/aws-sdk";
-// TODO create fake config for test:
-import configs from "../../../trend-list-configs";
+import { getTrendListConfig } from "../../helpers/trendListConfigHelpers";
 
 jest.mock("aws-xray-sdk-core", () => ({
   captureAWS: a => a
 }));
 jest.mock("aws-sdk");
+jest.mock("../../helpers/trendListConfigHelpers");
 
 const noop = jest.fn();
 
@@ -63,137 +63,175 @@ describe("RecordInteraction", () => {
     });
   });
 
-  describe("record increment event", () => {
-    it("should make a putItem request to dynamoDB", () => {
-      return recordInteractionHandler(fakeEvent, fakeContext, noop).then(() => {
-        expect(mockPutItem).toHaveBeenCalled();
-        const expectedTimestamp =
-          fakeTimestamp + configs.shoes.aggregationWindow;
-        expect(putParams.Item.expirationTimestamp.N).toBe(
-          expectedTimestamp.toString()
+  describe("when the TrendListConfig is successfully retrieveed", () => {
+    const fakeConfig = {
+      aggregationWindow: 60000
+    };
+    beforeEach(() => {
+      getTrendListConfig.mockResolvedValue(fakeConfig);
+    });
+
+    describe("record increment event", () => {
+      it("should make a putItem request to dynamoDB", () => {
+        return recordInteractionHandler(fakeEvent, fakeContext, noop).then(
+          () => {
+            expect(mockPutItem).toHaveBeenCalled();
+            const expectedTimestamp =
+              fakeTimestamp + fakeConfig.aggregationWindow;
+            expect(putParams.Item.expirationTimestamp.N).toBe(
+              expectedTimestamp.toString()
+            );
+            expect(putParams).toMatchSnapshot();
+          }
         );
-        expect(putParams).toMatchSnapshot();
+      });
+
+      it("should handle the case where the put request fails", () => {
+        const message = "dont put that there";
+        const fakePutError = new Error(message);
+        mockPutItem.mockImplementation((params, cb) => {
+          putParams = params;
+          return cb(fakePutError);
+        });
+
+        const mockCB = jest.fn();
+
+        return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
+          () => {
+            expect(mockPutItem).toHaveBeenCalled();
+            expect(mockCB).toHaveBeenCalledWith(null, {
+              statusCode: 500,
+              body: `Error writing increment record: ${message}`
+            });
+            expect(mockCB).toHaveBeenCalledTimes(1);
+            expect(mockUpdateItem).not.toHaveBeenCalled();
+            expect(mockInvoke).not.toHaveBeenCalled();
+          }
+        );
       });
     });
 
-    it("should handle the case where the put request fails", () => {
-      const message = "dont put that there";
-      const fakePutError = new Error(message);
-      mockPutItem.mockImplementation((params, cb) => {
-        putParams = params;
-        return cb(fakePutError);
+    describe("increment item count", () => {
+      it("should make an updateItem request to dynamoDB", () => {
+        return recordInteractionHandler(fakeEvent, fakeContext, noop).then(
+          () => {
+            expect(mockUpdateItem).toHaveBeenCalled();
+            expect(updateParams).toMatchSnapshot();
+          }
+        );
       });
 
-      const mockCB = jest.fn();
+      it("should handle the case where the updateItem request fails", () => {
+        const message = "nope cant update that";
+        const error = new Error(message);
 
+        mockUpdateItem.mockImplementation((params, cb) => {
+          updateParams = params;
+          return cb(error);
+        });
+
+        const mockCB = jest.fn();
+
+        return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
+          () => {
+            expect(mockCB).toHaveBeenCalledTimes(1);
+            expect(mockCB).toHaveBeenCalledWith(null, {
+              statusCode: 500,
+              body: `Error updating count: ${message}`
+            });
+            expect(mockInvoke).not.toHaveBeenCalled();
+          }
+        );
+      });
+    });
+
+    describe("invoke GetTrendingItems", () => {
+      it("should pass the correct trendListId", () => {
+        return recordInteractionHandler(fakeEvent, fakeContext, noop).then(
+          () => {
+            expect(mockInvoke).toHaveBeenCalledWith(
+              {
+                FunctionName: "GetTrendingItems",
+                Payload: JSON.stringify({
+                  queryStringParameters: {
+                    trendListId: "shoes"
+                  }
+                })
+              },
+              expect.any(Function)
+            );
+          }
+        );
+      });
+
+      it("should correctly forward the response from GetTrendingItems if successful", () => {
+        const mockCB = jest.fn();
+        return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
+          () => {
+            expect(mockCB).toHaveBeenCalledWith(null, trendingItemsResponse);
+          }
+        );
+      });
+
+      it("should handle the case where the invocation fails", () => {
+        const message = "nope cant call that";
+        const error = new Error(message);
+        mockInvoke.mockImplementation((params, cb) => {
+          return cb(error);
+        });
+
+        const mockCB = jest.fn();
+
+        return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
+          () => {
+            expect(mockCB).toHaveBeenCalledWith(null, {
+              statusCode: 500,
+              body: `Error invoking GetTrendingItems from RecordInteraction: ${message}`
+            });
+            expect(mockCB).toHaveBeenCalledTimes(1);
+          }
+        );
+      });
+
+      it("should handle the case where GetTrendingItems responds with unexpected response", () => {
+        mockInvoke.mockImplementation((params, cb) => {
+          return cb(null, {});
+        });
+
+        const mockCB = jest.fn();
+
+        return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
+          () => {
+            expect(mockCB).toHaveBeenCalledWith(null, {
+              statusCode: 500,
+              body: expect.stringMatching(
+                "Error parsing response from GetTrendingItems:"
+              )
+            });
+          }
+        );
+      });
+    });
+  });
+
+  describe("when there is an error retrieving the TrendListConfig", () => {
+    const message = "Misconfigured...";
+    const fakeConfigError = new Error(message);
+    beforeEach(() => {
+      getTrendListConfig.mockRejectedValue(fakeConfigError);
+    });
+
+    it("should respond with the error and not attempt to update or get the list of trending items", () => {
+      const mockCB = jest.fn();
       return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
         () => {
-          expect(mockPutItem).toHaveBeenCalled();
           expect(mockCB).toHaveBeenCalledWith(null, {
             statusCode: 500,
-            body: `Error writing increment record: ${message}`
+            body: message
           });
-          expect(mockCB).toHaveBeenCalledTimes(1);
+          expect(mockPutItem).not.toHaveBeenCalled();
           expect(mockUpdateItem).not.toHaveBeenCalled();
           expect(mockInvoke).not.toHaveBeenCalled();
-        }
-      );
-    });
-  });
-
-  describe("increment item count", () => {
-    it("should make an updateItem request to dynamoDB", () => {
-      return recordInteractionHandler(fakeEvent, fakeContext, noop).then(() => {
-        expect(mockUpdateItem).toHaveBeenCalled();
-        expect(updateParams).toMatchSnapshot();
-      });
-    });
-
-    it("should handle the case where the updateItem request fails", () => {
-      const message = "nope cant update that";
-      const error = new Error(message);
-
-      mockUpdateItem.mockImplementation((params, cb) => {
-        updateParams = params;
-        return cb(error);
-      });
-
-      const mockCB = jest.fn();
-
-      return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
-        () => {
-          expect(mockCB).toHaveBeenCalledTimes(1);
-          expect(mockCB).toHaveBeenCalledWith(null, {
-            statusCode: 500,
-            body: `Error updating count: ${message}`
-          });
-          expect(mockInvoke).not.toHaveBeenCalled();
-        }
-      );
-    });
-  });
-
-  describe("invoke GetTrendingItems", () => {
-    it("should pass the correct trendListId", () => {
-      return recordInteractionHandler(fakeEvent, fakeContext, noop).then(() => {
-        expect(mockInvoke).toHaveBeenCalledWith(
-          {
-            FunctionName: "GetTrendingItems",
-            Payload: JSON.stringify({
-              queryStringParameters: {
-                trendListId: "shoes"
-              }
-            })
-          },
-          expect.any(Function)
-        );
-      });
-    });
-
-    it("should correctly forward the response from GetTrendingItems if successful", () => {
-      const mockCB = jest.fn();
-      return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
-        () => {
-          expect(mockCB).toHaveBeenCalledWith(null, trendingItemsResponse);
-        }
-      );
-    });
-
-    it("should handle the case where the invocation fails", () => {
-      const message = "nope cant call that";
-      const error = new Error(message);
-      mockInvoke.mockImplementation((params, cb) => {
-        return cb(error);
-      });
-
-      const mockCB = jest.fn();
-
-      return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
-        () => {
-          expect(mockCB).toHaveBeenCalledWith(null, {
-            statusCode: 500,
-            body: `Error invoking GetTrendingItems from RecordInteraction: ${message}`
-          });
-          expect(mockCB).toHaveBeenCalledTimes(1);
-        }
-      );
-    });
-
-    it("should handle the case where GetTrendingItems responds with unexpected response", () => {
-      mockInvoke.mockImplementation((params, cb) => {
-        return cb(null, {});
-      });
-
-      const mockCB = jest.fn();
-
-      return recordInteractionHandler(fakeEvent, fakeContext, mockCB).then(
-        () => {
-          expect(mockCB).toHaveBeenCalledWith(null, {
-            statusCode: 500,
-            body: expect.stringMatching(
-              "Error parsing response from GetTrendingItems:"
-            )
-          });
         }
       );
     });

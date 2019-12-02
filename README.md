@@ -47,7 +47,8 @@ It also supports multiple lists so on our imaginary image sharing platform we co
 ![service diagram](./service-diagram.png)
 
 ## How to deploy to your own AWS account
-** Note this project is still a work in progress - use at your own risk
+
+\*\* Note this project is still a work in progress - use at your own risk
 
 1. Clone this repository
 
@@ -76,8 +77,8 @@ It also supports multiple lists so on our imaginary image sharing platform we co
 - [x] CodeBuild job for PRs
 - [ ] CodePipeline post-merge test & deployment
 - [x] Bundle handlers using webpack
-- [ ] Tree shaking?
-- [ ] Move configs into DynamoDB table (with DAX?) and design API / front end for updating
+- [x] Move configs into DynamoDB table
+- [ ] Put config table behind DAX cluster
 - [ ] Make deployment more configurable - allow stack name / bucket name specification
 - [ ] Create reusable response helpers
 - [ ] Enforce code style - (eslint + prettier)
