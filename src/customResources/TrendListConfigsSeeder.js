@@ -35,20 +35,20 @@ const putDefaultTrendListConfig = () =>
 
 export const handler = (event, context) => {
   if (event.RequestType === "Create") {
-    putDefaultTrendListConfig()
-      .then(() => {
+    return putDefaultTrendListConfig()
+      .then(() =>
         send(event, context, SUCCESS, {
           Message: "Successfully seeded TrendListConfigs table"
-        });
-      })
-      .catch(err => {
+        })
+      )
+      .catch(err =>
         send(event, context, FAILED, {
           Message: `Error seeding TrendListConfigs table: ${err.message}`
-        });
-      });
+        })
+      );
   }
 
-  send(event, context, SUCCESS, {
+  return send(event, context, SUCCESS, {
     Message: "Custom resource request not of type Create"
   });
 };

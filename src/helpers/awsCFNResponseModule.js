@@ -1,61 +1,42 @@
-/* Copyright 2015 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-   This file is licensed to you under the AWS Customer Agreement (the "License").
-   You may not use this file except in compliance with the License.
-   A copy of the License is located at http://aws.amazon.com/agreement/ .
-   This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied.
-   See the License for the specific language governing permissions and limitations under the License. */
+// lifted from AWS cfn-response module source:
+// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-lambda-function-code-cfnresponsemodule.html
 
-exports.SUCCESS = "SUCCESS";
-exports.FAILED = "FAILED";
+export const SUCCESS = "SUCCESS";
+export const FAILED = "FAILED";
 
-exports.send = function(
-  event,
-  context,
-  responseStatus,
-  responseData,
-  physicalResourceId,
-  noEcho
-) {
-  var responseBody = JSON.stringify({
-    Status: responseStatus,
-    Reason:
-      "See the details in CloudWatch Log Stream: " + context.logStreamName,
-    PhysicalResourceId: physicalResourceId || context.logStreamName,
-    StackId: event.StackId,
-    RequestId: event.RequestId,
-    LogicalResourceId: event.LogicalResourceId,
-    NoEcho: noEcho || false,
-    Data: responseData
+export const send = (event, context, responseStatus, responseData) =>
+  new Promise((resolve, reject) => {
+    const responseBody = JSON.stringify({
+      Status: responseStatus,
+      Reason:
+        "See the details in CloudWatch Log Stream: " + context.logStreamName,
+      PhysicalResourceId: context.logStreamName,
+      StackId: event.StackId,
+      RequestId: event.RequestId,
+      LogicalResourceId: event.LogicalResourceId,
+      NoEcho: false,
+      Data: responseData
+    });
+
+    const https = require("https");
+    const url = require("url");
+
+    const parsedUrl = url.parse(event.ResponseURL);
+    const options = {
+      hostname: parsedUrl.hostname,
+      port: 443,
+      path: parsedUrl.path,
+      method: "PUT",
+      headers: {
+        "content-type": "",
+        "content-length": responseBody.length
+      }
+    };
+
+    const request = https.request(options, () => resolve());
+
+    request.on("error", reject);
+
+    request.write(responseBody);
+    request.end();
   });
-
-  console.log("Response body:\n", responseBody);
-
-  var https = require("https");
-  var url = require("url");
-
-  var parsedUrl = url.parse(event.ResponseURL);
-  var options = {
-    hostname: parsedUrl.hostname,
-    port: 443,
-    path: parsedUrl.path,
-    method: "PUT",
-    headers: {
-      "content-type": "",
-      "content-length": responseBody.length
-    }
-  };
-
-  var request = https.request(options, function(response) {
-    console.log("Status code: " + response.statusCode);
-    console.log("Status message: " + response.statusMessage);
-    context.done();
-  });
-
-  request.on("error", function(error) {
-    console.log("send(..) failed executing https.request(..): " + error);
-    context.done();
-  });
-
-  request.write(responseBody);
-  request.end();
-};
