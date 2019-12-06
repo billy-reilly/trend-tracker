@@ -1,6 +1,6 @@
 import AWS from "aws-sdk";
 
-import { send, SUCCESS, FAILED } from "../helpers/awsCFNResponseModule";
+import { send, SUCCESS, FAILED } from "../helpers/customResourceResponder";
 
 const dynamodb = new AWS.DynamoDB();
 
