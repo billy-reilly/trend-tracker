@@ -6,7 +6,7 @@ import { createPromiseCB } from "../helpers/promiseHelpers";
 const AWS = AWSXRay.captureAWS(AWSSDK);
 const dynamodb = new AWS.DynamoDB();
 
-export const getTrendListConfigById = id =>
+const getTrendListConfigById = id =>
   new Promise((resolve, reject) => {
     dynamodb.getItem(
       {
@@ -40,11 +40,7 @@ export const getTrendListConfigById = id =>
 
 export const getTrendListConfig = id =>
   getTrendListConfigById(id).catch(err => {
-    if (/^TrendListConfig not found for default$/.test(err.message)) {
-      throw new Error("Default TrendListConfig item is missing");
-    }
     if (/^TrendListConfig not found for/.test(err.message)) {
-      console.log("in herrrrre");
       return getTrendListConfigById("default");
     }
     throw err;
