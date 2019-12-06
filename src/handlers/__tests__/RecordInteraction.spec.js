@@ -16,11 +16,15 @@ jest.mock("../../helpers/trendListConfigHelpers");
 
 const noop = jest.fn();
 
+const fakeConfig = {
+  aggregationWindow: 60000
+};
 const fakeTimestamp = 1573495200000;
 const fakeContext = {};
+const fakeTrendListId = "shoes";
 const fakeEvent = {
   queryStringParameters: {
-    trendListId: "shoes"
+    trendListId: fakeTrendListId
   },
   body: JSON.stringify({ itemId: "old boot" })
 };
@@ -63,10 +67,15 @@ describe("RecordInteraction", () => {
     });
   });
 
-  describe("when the TrendListConfig is successfully retrieveed", () => {
-    const fakeConfig = {
-      aggregationWindow: 60000
-    };
+  it("should get the appropriate config from the TrendListConfigs table", () => {
+    getTrendListConfig.mockResolvedValue(fakeConfig);
+
+    return recordInteractionHandler(fakeEvent, fakeContext, noop).then(() => {
+      expect(getTrendListConfig).toHaveBeenCalledWith(fakeTrendListId);
+    });
+  });
+
+  describe("when the TrendListConfig is successfully retrieved", () => {
     beforeEach(() => {
       getTrendListConfig.mockResolvedValue(fakeConfig);
     });
@@ -146,7 +155,7 @@ describe("RecordInteraction", () => {
     });
 
     describe("invoke GetTrendingItems", () => {
-      it("should pass the correct trendListId", () => {
+      it("should pass the correct trendListId and the config", () => {
         return recordInteractionHandler(fakeEvent, fakeContext, noop).then(
           () => {
             expect(mockInvoke).toHaveBeenCalledWith(
@@ -155,7 +164,8 @@ describe("RecordInteraction", () => {
                 Payload: JSON.stringify({
                   queryStringParameters: {
                     trendListId: "shoes"
-                  }
+                  },
+                  config: fakeConfig
                 })
               },
               expect.any(Function)

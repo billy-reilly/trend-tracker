@@ -53,7 +53,7 @@ const incrementItemCount = (itemId, trendListId) =>
     );
   });
 
-const invokeGetTrendingItems = trendListId =>
+const invokeGetTrendingItems = (trendListId, config) =>
   new Promise((resolve, reject) => {
     lambda.invoke(
       {
@@ -61,7 +61,8 @@ const invokeGetTrendingItems = trendListId =>
         Payload: JSON.stringify({
           queryStringParameters: {
             trendListId
-          }
+          },
+          config
         })
       },
       createPromiseCB(resolve, reject)
@@ -76,13 +77,15 @@ export const handler = (event, context, cb) => {
 
   return (
     getTrendListConfig(trendListId)
-      .then(({ aggregationWindow }) => {
+      .then(config => {
+        const { aggregationWindow } = config;
         const expirationTimestamp = interactionTimestamp + aggregationWindow;
+
         return recordIncrementEvent(itemId, expirationTimestamp, trendListId)
           .then(() => {
             return incrementItemCount(itemId, trendListId)
               .then(() => {
-                return invokeGetTrendingItems(trendListId)
+                return invokeGetTrendingItems(trendListId, config)
                   .then(upstreamResponse => {
                     try {
                       const response = JSON.parse(upstreamResponse.Payload);

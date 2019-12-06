@@ -10,10 +10,14 @@ jest.mock("../../helpers/trendListConfigHelpers");
 
 const noop = () => {};
 
+const fakeConfig = {
+  trendListLimit: "10"
+};
 const fakeContext = {};
+const fakeTrendListId = "shoes";
 const fakeEvent = {
   queryStringParameters: {
-    trendListId: "shoes"
+    trendListId: fakeTrendListId
   }
 };
 const fakeQueryData = {
@@ -32,16 +36,52 @@ const fakeQueryData = {
 describe("GetTrendingItems", () => {
   beforeEach(() => {
     jest.resetAllMocks();
+
+    mockQuery.mockImplementation((params, cb) => {
+      cb(null, fakeQueryData);
+    });
+    getTrendListConfig.mockResolvedValue(fakeConfig);
+  });
+
+  describe("when the event does not contain the config", () => {
+    it("should get the appropriate config from the TrendListConfigs table", () => {
+      return getTrendingItemsHandler(fakeEvent, fakeContext, noop).then(() => {
+        expect(getTrendListConfig).toHaveBeenCalledWith(fakeTrendListId);
+        expect(mockQuery).toHaveBeenCalledWith(
+          expect.objectContaining({
+            Limit: fakeConfig.trendListLimit
+          }),
+          expect.any(Function)
+        );
+      });
+    });
+  });
+
+  describe("when the event does contain the config", () => {
+    const forwardedConfig = { trendListLimit: "999" };
+    const fakeEventWithConfig = {
+      ...fakeEvent,
+      config: forwardedConfig
+    };
+
+    it("should use the forwarded config rather than reading from the TrendListConfigs table", () => {
+      return getTrendingItemsHandler(
+        fakeEventWithConfig,
+        fakeContext,
+        noop
+      ).then(() => {
+        expect(getTrendListConfig).not.toHaveBeenCalled();
+        expect(mockQuery).toHaveBeenCalledWith(
+          expect.objectContaining({
+            Limit: forwardedConfig.trendListLimit
+          }),
+          expect.any(Function)
+        );
+      });
+    });
   });
 
   describe("when the TrendListConfig is successfully retrieved", () => {
-    const fakeConfig = {
-      trendListLimit: "10"
-    };
-    beforeEach(() => {
-      getTrendListConfig.mockResolvedValue(fakeConfig);
-    });
-
     it("should query DynamoDB", () => {
       let queryParams;
       mockQuery.mockImplementation((params, cb) => {
@@ -56,9 +96,6 @@ describe("GetTrendingItems", () => {
     });
 
     it("should correctly format the query data and respond", () => {
-      mockQuery.mockImplementation((params, cb) => {
-        cb(null, fakeQueryData);
-      });
       const cbMock = jest.fn();
       return getTrendingItemsHandler(fakeEvent, fakeContext, cbMock).then(
         () => {

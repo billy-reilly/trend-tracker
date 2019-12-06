@@ -29,16 +29,14 @@ const getTrendingItems = (trendListId, trendListLimit) =>
   });
 
 export const handler = (event, context, cb) => {
-  // TODO when called from RecordInteraction pass down config and save extra DB reads
-
   const { trendListId } = event.queryStringParameters;
 
-  // const configPromise = event.config
-  //   ? getTrendListConfig(trendListId)
-  //   : Promise.resolve(event.config);
+  const promisedConfig = event.config
+    ? Promise.resolve(event.config)
+    : getTrendListConfig(trendListId);
 
   return (
-    getTrendListConfig(trendListId)
+    promisedConfig
       .then(({ trendListLimit }) =>
         getTrendingItems(trendListId, trendListLimit)
           .then(data => {
