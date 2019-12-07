@@ -1,6 +1,7 @@
 import AWS from "aws-sdk";
 
 import { send, SUCCESS, FAILED } from "../helpers/customResourceResponder";
+import { createPromiseCB } from "../helpers/promiseHelpers";
 
 const dynamodb = new AWS.DynamoDB();
 
@@ -24,12 +25,7 @@ const putDefaultTrendListConfig = () =>
         TableName: "TrendListConfigs",
         Item: defaultTrendListConfig
       },
-      (err, data) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      }
+      createPromiseCB(resolve, reject)
     );
   });
 
