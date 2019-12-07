@@ -12,7 +12,7 @@ const recordIncrementEvent = (itemId, expirationTimestamp, trendListId) =>
   new Promise((resolve, reject) => {
     dynamodb.putItem(
       {
-        TableName: "Interactions",
+        TableName: `${process.env.STACK_NAME}-Interactions`,
         Item: {
           itemId: {
             S: itemId
@@ -33,7 +33,7 @@ const incrementItemCount = (itemId, trendListId) =>
   new Promise((resolve, reject) => {
     dynamodb.updateItem(
       {
-        TableName: "InteractionCounts",
+        TableName: `${process.env.STACK_NAME}-InteractionCounts`,
         Key: {
           itemId: {
             S: itemId
@@ -57,7 +57,7 @@ const invokeGetTrendingItems = (trendListId, config) =>
   new Promise((resolve, reject) => {
     lambda.invoke(
       {
-        FunctionName: "GetTrendingItems",
+        FunctionName: `${process.env.STACK_NAME}-GetTrendingItems`,
         Payload: JSON.stringify({
           queryStringParameters: {
             trendListId

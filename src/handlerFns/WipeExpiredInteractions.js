@@ -10,7 +10,7 @@ const decrementInteractionCount = ({ itemId, trendListId }) =>
   new Promise((resolve, reject) => {
     dynamodb.updateItem(
       {
-        TableName: "InteractionCounts",
+        TableName: `${process.env.STACK_NAME}-InteractionCounts`,
         Key: {
           itemId: {
             S: itemId
@@ -35,7 +35,7 @@ const removeInteraction = ({ itemId, expirationTimestamp }) =>
   new Promise((resolve, reject) => {
     dynamodb.deleteItem(
       {
-        TableName: "Interactions",
+        TableName: `${process.env.STACK_NAME}-Interactions`,
         Key: {
           itemId: {
             S: itemId
@@ -54,7 +54,7 @@ export const handler = (event, context, cb) => {
   // TODO: break out into getExpiredEvents
   return dynamodb.scan(
     {
-      TableName: "Interactions",
+      TableName: `${process.env.STACK_NAME}-Interactions`,
       FilterExpression: "expirationTimestamp < :now",
       ExpressionAttributeValues: {
         ":now": {

@@ -22,7 +22,7 @@ const putDefaultTrendListConfig = () =>
   new Promise((resolve, reject) => {
     dynamodb.putItem(
       {
-        TableName: "TrendListConfigs",
+        TableName: `${process.env.STACK_NAME}-TrendListConfigs`,
         Item: defaultTrendListConfig
       },
       createPromiseCB(resolve, reject)
