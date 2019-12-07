@@ -1,12 +1,12 @@
 const path = require("path");
 
-module.exports = ({ customResource, handler } = {}) => {
-  let entry = `./src/handlers/${handler}.js`;
-  let outputFilename = `${handler}-bundle.js`;
+module.exports = ({ initialisationFn, handlerFn } = {}) => {
+  let entry = `./src/handlerFns/${handlerFn}.js`;
+  let outputFilename = `${handlerFn}-bundle.js`;
 
-  if (customResource) {
-    entry = `./src/customResources/${customResource}.js`;
-    outputFilename = `${customResource}-bundle.js`;
+  if (initialisationFn) {
+    entry = `./src/initialisationFns/${initialisationFn}.js`;
+    outputFilename = `${initialisationFn}-bundle.js`;
   }
 
   return {
