@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`RecordInteraction increment item count should make an updateItem request to dynamoDB 1`] = `
+exports[`RecordInteraction when the TrendListConfig is successfully retrieved increment item count should make an updateItem request to dynamoDB 1`] = `
 Object {
   "ExpressionAttributeValues": Object {
     ":inc": Object {
@@ -23,7 +23,7 @@ Object {
 }
 `;
 
-exports[`RecordInteraction record increment event should make a putItem request to dynamoDB 1`] = `
+exports[`RecordInteraction when the TrendListConfig is successfully retrieved record increment event should make a putItem request to dynamoDB 1`] = `
 Object {
   "Item": Object {
     "expirationTimestamp": Object {

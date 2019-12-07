@@ -1,6 +1,7 @@
 /**
  * DynamoDB
  */
+export const mockGetItem = jest.fn();
 export const mockQuery = jest.fn();
 export const mockPutItem = jest.fn();
 export const mockUpdateItem = jest.fn();
@@ -8,6 +9,7 @@ export const mockDeleteItem = jest.fn();
 export const mockScan = jest.fn();
 
 const DynamoDB = jest.fn().mockImplementation(() => ({
+  getItem: mockGetItem,
   query: mockQuery,
   putItem: mockPutItem,
   updateItem: mockUpdateItem,

@@ -1,27 +1,37 @@
 const path = require("path");
 
-module.exports = ({ handler } = {}) => ({
-  entry: `./src/handlers/${handler}.js`,
-  mode: "production",
-  output: {
-    path: path.resolve(__dirname, "./dist/"),
-    filename: `${handler}-bundle.js`,
-    libraryTarget: "commonjs"
-  },
-  target: "node",
+module.exports = ({ initialisationFn, handlerFn } = {}) => {
+  let entry = `./src/handlerFns/${handlerFn}.js`;
+  let outputFilename = `${handlerFn}-bundle.js`;
 
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /(node_modules)/,
-        use: {
-          loader: "babel-loader",
-          options: {
-            presets: ["@babel/preset-env"]
+  if (initialisationFn) {
+    entry = `./src/initialisationFns/${initialisationFn}.js`;
+    outputFilename = `${initialisationFn}-bundle.js`;
+  }
+
+  return {
+    entry,
+    mode: "production",
+    output: {
+      path: path.resolve(__dirname, "./dist/"),
+      filename: outputFilename,
+      libraryTarget: "commonjs"
+    },
+    target: "node",
+
+    module: {
+      rules: [
+        {
+          test: /\.js$/,
+          exclude: /(node_modules)/,
+          use: {
+            loader: "babel-loader",
+            options: {
+              presets: ["@babel/preset-env"]
+            }
           }
         }
-      }
-    ]
-  }
-});
+      ]
+    }
+  };
+};
