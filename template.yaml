@@ -9,7 +9,11 @@ Resources:
   TrendListConfigs:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: TrendListConfigs
+      TableName:
+        "Fn::Join":
+          - "-"
+          - - Ref: AWS::StackName
+            - TrendListConfigs
       AttributeDefinitions:
         - AttributeName: trendListId
           AttributeType: S
@@ -23,7 +27,11 @@ Resources:
   InteractionCounts:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: InteractionCounts
+      TableName:
+        "Fn::Join":
+          - "-"
+          - - Ref: AWS::StackName
+            - InteractionCounts
       AttributeDefinitions:
         - AttributeName: trendListId
           AttributeType: S
@@ -52,7 +60,11 @@ Resources:
   Interactions:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: Interactions
+      TableName:
+        "Fn::Join":
+          - "-"
+          - - Ref: AWS::StackName
+            - Interactions
       AttributeDefinitions:
         - AttributeName: itemId
           AttributeType: S
@@ -74,12 +86,20 @@ Resources:
   TrendListConfigsSeeder:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: TrendListConfigsSeeder
+      FunctionName:
+        "Fn::Join":
+          - "-"
+          - - Ref: AWS::StackName
+            - TrendListConfigsSeeder
       Handler: TrendListConfigsSeeder-bundle.handler
       Runtime: nodejs10.x
       CodeUri: ./dist/TrendListConfigsSeeder-bundle.js
       Description: Custom resource for seeding the config table when the stack is created
       Timeout: 60
+      Environment:
+        Variables:
+          STACK_NAME:
+            Ref: AWS::StackName
       Policies:
         - Version: "2012-10-17"
           Statement:
@@ -93,12 +113,18 @@ Resources:
                     - Ref: "AWS::Region"
                     - ":"
                     - Ref: "AWS::AccountId"
-                    - ":table/TrendListConfigs"
+                    - ":table/"
+                    - Ref: AWS::StackName
+                    - "-TrendListConfigs"
 
   GetTrendingItems:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: GetTrendingItems
+      FunctionName:
+        "Fn::Join":
+          - "-"
+          - - Ref: AWS::StackName
+            - GetTrendingItems
       Handler: GetTrendingItems-bundle.handler
       Runtime: nodejs10.x
       CodeUri: ./dist/GetTrendingItems-bundle.js
@@ -113,6 +139,10 @@ Resources:
               method.request.querystring.trendListId:
                 Required: true
       Tracing: Active
+      Environment:
+        Variables:
+          STACK_NAME:
+            Ref: AWS::StackName
       Policies:
         - Version: "2012-10-17"
           Statement:
@@ -126,7 +156,9 @@ Resources:
                     - Ref: "AWS::Region"
                     - ":"
                     - Ref: "AWS::AccountId"
-                    - ":table/InteractionCounts/index/trendListId-interactionCount-index"
+                    - ":table/"
+                    - Ref: AWS::StackName
+                    - "-InteractionCounts/index/trendListId-interactionCount-index"
             - Effect: Allow
               Action:
                 - "dynamodb:GetItem"
@@ -137,12 +169,18 @@ Resources:
                     - Ref: "AWS::Region"
                     - ":"
                     - Ref: "AWS::AccountId"
-                    - ":table/TrendListConfigs"
+                    - ":table/"
+                    - Ref: AWS::StackName
+                    - "-TrendListConfigs"
 
   RecordInteraction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: RecordInteraction
+      FunctionName:
+        "Fn::Join":
+          - "-"
+          - - Ref: AWS::StackName
+            - RecordInteraction
       Handler: RecordInteraction-bundle.handler
       Runtime: nodejs10.x
       CodeUri: ./dist/RecordInteraction-bundle.js
@@ -158,6 +196,10 @@ Resources:
               method.request.querystring.trendListId:
                 Required: true
       Tracing: Active
+      Environment:
+        Variables:
+          STACK_NAME:
+            Ref: AWS::StackName
       Policies:
         - Version: "2012-10-17"
           Statement:
@@ -171,7 +213,9 @@ Resources:
                     - Ref: "AWS::Region"
                     - ":"
                     - Ref: "AWS::AccountId"
-                    - ":table/Interactions"
+                    - ":table/"
+                    - Ref: AWS::StackName
+                    - "-Interactions"
             - Effect: Allow
               Action:
                 - "dynamodb:UpdateItem"
@@ -182,7 +226,9 @@ Resources:
                     - Ref: "AWS::Region"
                     - ":"
                     - Ref: "AWS::AccountId"
-                    - ":table/InteractionCounts"
+                    - ":table/"
+                    - Ref: AWS::StackName
+                    - "-InteractionCounts"
             - Effect: Allow
               Action:
                 - "lambda:InvokeFunction"
@@ -193,7 +239,9 @@ Resources:
                     - Ref: "AWS::Region"
                     - ":"
                     - Ref: "AWS::AccountId"
-                    - ":function:GetTrendingItems"
+                    - ":function:"
+                    - Ref: AWS::StackName
+                    - "-GetTrendingItems"
             - Effect: Allow
               Action:
                 - "dynamodb:GetItem"
@@ -204,12 +252,18 @@ Resources:
                     - Ref: "AWS::Region"
                     - ":"
                     - Ref: "AWS::AccountId"
-                    - ":table/TrendListConfigs"
+                    - ":table/"
+                    - Ref: AWS::StackName
+                    - "-TrendListConfigs"
 
   WipeExpiredInteractions:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: WipeExpiredInteractions
+      FunctionName:
+        "Fn::Join":
+          - "-"
+          - - Ref: AWS::StackName
+            - WipeExpiredInteractions
       Handler: WipeExpiredInteractions-bundle.handler
       Runtime: nodejs10.x
       CodeUri: ./dist/WipeExpiredInteractions-bundle.js
@@ -222,6 +276,10 @@ Resources:
             Schedule: rate(1 minute)
             Enabled: True
       Tracing: Active
+      Environment:
+        Variables:
+          STACK_NAME:
+            Ref: AWS::StackName
       Policies:
         - Version: "2012-10-17"
           Statement:
@@ -236,7 +294,9 @@ Resources:
                     - Ref: "AWS::Region"
                     - ":"
                     - Ref: "AWS::AccountId"
-                    - ":table/Interactions"
+                    - ":table/"
+                    - Ref: AWS::StackName
+                    - "-Interactions"
             - Effect: Allow
               Action:
                 - "dynamodb:UpdateItem"
@@ -247,7 +307,9 @@ Resources:
                     - Ref: "AWS::Region"
                     - ":"
                     - Ref: "AWS::AccountId"
-                    - ":table/InteractionCounts"
+                    - ":table/"
+                    - Ref: AWS::StackName
+                    - "-InteractionCounts"
 
   ########################
   # Custom resources:

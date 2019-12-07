@@ -7,7 +7,7 @@
     "build:initialisationFns": "webpack --env.initialisationFn=TrendListConfigsSeeder",
     "build:handlerFns": "webpack --env.handlerFn=GetTrendingItems && webpack --env.handlerFn=RecordInteraction && webpack --env.handlerFn=WipeExpiredInteractions",
     "build": "npm run build:initialisationFns && npm run build:handlerFns",
-    "sam:deploy": "sam deploy --template-file packaged.yaml --stack-name trend-tracker-stack --capabilities CAPABILITY_IAM",
+    "sam:deploy": "sam deploy --template-file packaged.yaml --stack-name $STACK_NAME --capabilities CAPABILITY_IAM",
     "sam:package": "sam package --template-file template.yaml --s3-bucket trend-tracker --output-template-file packaged.yaml",
     "test:unit": "jest"
   },

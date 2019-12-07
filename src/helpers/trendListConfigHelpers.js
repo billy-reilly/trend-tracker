@@ -10,7 +10,7 @@ const getTrendListConfigById = id =>
   new Promise((resolve, reject) => {
     dynamodb.getItem(
       {
-        TableName: "TrendListConfigs",
+        TableName: `${process.env.STACK_NAME}-TrendListConfigs`,
         Key: {
           trendListId: {
             S: id

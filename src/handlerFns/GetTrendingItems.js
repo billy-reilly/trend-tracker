@@ -11,7 +11,7 @@ const getTrendingItems = (trendListId, trendListLimit) =>
   new Promise((resolve, reject) => {
     dynamodb.query(
       {
-        TableName: "InteractionCounts",
+        TableName: `${process.env.STACK_NAME}-InteractionCounts`,
         IndexName: "trendListId-interactionCount-index",
         KeyConditionExpression: "trendListId = :tl",
         ExpressionAttributeValues: {
