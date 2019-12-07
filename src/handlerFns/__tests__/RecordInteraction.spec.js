@@ -17,7 +17,7 @@ jest.mock("../../helpers/trendListConfigHelpers");
 const noop = jest.fn();
 
 const fakeConfig = {
-  aggregationWindow: 60000
+  aggregationWindow: 1
 };
 const fakeTimestamp = 1573495200000;
 const fakeContext = {};
@@ -86,7 +86,7 @@ describe("RecordInteraction", () => {
           () => {
             expect(mockPutItem).toHaveBeenCalled();
             const expectedTimestamp =
-              fakeTimestamp + fakeConfig.aggregationWindow;
+              fakeTimestamp + fakeConfig.aggregationWindow * 60 * 1000;
             expect(putParams.Item.expirationTimestamp.N).toBe(
               expectedTimestamp.toString()
             );

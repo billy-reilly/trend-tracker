@@ -79,7 +79,8 @@ export const handler = (event, context, cb) => {
     getTrendListConfig(trendListId)
       .then(config => {
         const { aggregationWindow } = config;
-        const expirationTimestamp = interactionTimestamp + aggregationWindow;
+        const expirationTimestamp =
+          interactionTimestamp + aggregationWindow * 60 * 1000;
 
         return recordIncrementEvent(itemId, expirationTimestamp, trendListId)
           .then(() => {

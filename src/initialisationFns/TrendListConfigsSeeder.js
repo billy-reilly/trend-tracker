@@ -4,7 +4,7 @@ import { send, SUCCESS, FAILED } from "../helpers/customResourceResponder";
 
 const dynamodb = new AWS.DynamoDB();
 
-const defaultAggregationWindow = 1000 * 60 * 60; // 1 hr in ms
+const defaultAggregationWindow = 60; // 1 hr in ms
 const defaultTrendListConfig = {
   trendListId: {
     S: "default"
