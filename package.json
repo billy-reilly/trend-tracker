@@ -29,7 +29,7 @@
     "jest": "^24.9.0",
     "mockdate": "^2.0.5",
     "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.10"
+    "webpack-cli": "^3.3.12"
   },
   "dependencies": {
     "aws-sdk": "^2.569.0",
